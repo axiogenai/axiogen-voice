@@ -1,0 +1,10 @@
+node_modules/
+.env
+.venv/
+__pycache__/
+*.pyc
+models/*.onnx
+models/*.bin
+*.wav
+.DS_Store
+Thumbs.db
