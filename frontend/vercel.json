@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://adityax26-axiogentts.hf.space/:path*" }
+    { "source": "/api/:path*", "destination": "https://adityax26-axiogenttspro.hf.space/:path*" }
   ],
   "headers": [
     {
