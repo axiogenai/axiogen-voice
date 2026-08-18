@@ -459,7 +459,7 @@ function startTimer() {
 }
 function stopTimer() { clearInterval(timerInterval); timerInterval = null; }
 
-// ── GENERATE ──
+// ── STREAMING GENERATE: Sub-second First-Sound Playback ──
 async function generate() {
   if (generating) return;
   const text = inp.value.trim();
@@ -468,9 +468,9 @@ async function generate() {
 
   generating = true;
   genBtn.disabled = true;
-  genLbl.textContent = '⏳ Generating…';
+  genLbl.textContent = '⏳ Streaming…';
   plyr.classList.add('show');
-  pBar.style.width = '0%';
+  pBar.style.width = '20%';
   pMeta.textContent = '';
   aud.src = '';
   aud.pause();
@@ -478,9 +478,7 @@ async function generate() {
 
   const key = keyInp.value.trim() || 'teamaxiogen_admin_master';
   const speed = parseFloat(spdSlider.value);
-  const chunks = microSplit(text);
-  const total = chunks.length;
-  pStat.innerHTML = '<span class="wave"><i></i><i></i><i></i><i></i><i></i></span> Synthesizing ' + total + ' segment' + (total>1?'s':'') + '…';
+  pStat.innerHTML = '<span class="wave"><i></i><i></i><i></i><i></i><i></i></span> Streaming speech in real-time…';
 
   let audioCtx;
   try {
@@ -493,44 +491,79 @@ async function generate() {
   const t0 = performance.now();
 
   try {
-    for (let i = 0; i < total; i++) {
-      pStat.innerHTML = '<span class="wave"><i></i><i></i><i></i><i></i><i></i></span> Segment ' + (i+1) + '/' + total;
-      pBar.style.width = Math.round((i / total) * 100) + '%';
+    const res = await fetch(API + '/v1/audio/speech', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + key
+      },
+      body: JSON.stringify({
+        model: 'axiogen-v2',
+        input: text,
+        voice: curVoice,
+        speed: speed,
+        stream: true
+      })
+    });
 
-      const r = await fetch(API + '/v1/tts/chunk', {
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-        body: JSON.stringify({text:chunks[i], voice:curVoice, speed})
-      });
-      if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || e.detail || 'Failed'); }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || err.detail || 'Streaming failed');
+    }
 
-      const ab = await r.arrayBuffer();
-      allBufs.push(ab.slice(0));
-      const audioBuf = await audioCtx.decodeAudioData(ab);
+    const reader = res.body.getReader();
+    let accumulated = new Uint8Array(0);
 
-      if (!firstDone) { pMeta.textContent = 'First sound: ' + ((performance.now()-t0)/1000).toFixed(1) + 's'; firstDone = true; }
+    function concatU8(a, b) {
+      const c = new Uint8Array(a.length + b.length);
+      c.set(a, 0); c.set(b, a.length);
+      return c;
+    }
 
-      const src = audioCtx.createBufferSource();
-      src.buffer = audioBuf;
-      src.connect(audioCtx.destination);
-      const now = audioCtx.currentTime;
-      if (nextT < now) nextT = now;
-      src.start(nextT);
-      nextT += audioBuf.duration;
-      dur += audioBuf.duration;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      accumulated = concatU8(accumulated, value);
+
+      while (accumulated.length >= 4) {
+        const dv = new DataView(accumulated.buffer, accumulated.byteOffset, 4);
+        const chunkLen = dv.getUint32(0, false);
+        if (accumulated.length < 4 + chunkLen) break;
+
+        const wavBytes = accumulated.slice(4, 4 + chunkLen);
+        accumulated = accumulated.slice(4 + chunkLen);
+        allBufs.push(wavBytes.buffer.slice(wavBytes.byteOffset, wavBytes.byteOffset + wavBytes.byteLength));
+
+        const audioBuf = await audioCtx.decodeAudioData(wavBytes.buffer.slice(wavBytes.byteOffset, wavBytes.byteOffset + wavBytes.byteLength));
+        if (!firstDone) {
+          const ttfs = Math.round(performance.now() - t0);
+          pMeta.textContent = '⚡ First-Sound: ' + ttfs + 'ms';
+          firstDone = true;
+          pBar.style.width = '70%';
+        }
+
+        const src = audioCtx.createBufferSource();
+        src.buffer = audioBuf;
+        src.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+        if (nextT < now) nextT = now;
+        src.start(nextT);
+        nextT += audioBuf.duration;
+        dur += audioBuf.duration;
+      }
     }
 
     pBar.style.width = '100%';
     stopTimer();
-    const elapsed = ((performance.now()-t0)/1000).toFixed(1);
-    pStat.innerHTML = '✅ ' + dur.toFixed(1) + 's audio — generated in ' + elapsed + 's';
+    const elapsed = ((performance.now() - t0)/1000).toFixed(1);
+    pStat.innerHTML = '✅ Done — ' + dur.toFixed(1) + 's audio in ' + elapsed + 's';
 
     const merged = mergeWav(allBufs);
     if (merged) aud.src = URL.createObjectURL(merged);
   } catch(e) {
     stopTimer();
     pStat.innerHTML = '❌ ' + e.message;
-    toast(e.message,'err');
+    toast(e.message, 'err');
   } finally {
     generating = false;
     genBtn.disabled = false;
