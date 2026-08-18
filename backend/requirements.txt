@@ -1,10 +1,11 @@
 fastapi
 uvicorn[standard]
-websockets
-kokoro-onnx>=0.4.0
+kokoro>=0.8.4
 soundfile
 numpy
-onnxruntime
-python-dotenv
+torch
+torchaudio
+misaki[en]
+spacy
 pydantic
-requests
+python-dotenv
