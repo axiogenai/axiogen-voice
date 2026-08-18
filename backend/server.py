@@ -126,7 +126,7 @@ ALL_VOICES = [
     {"id": "pm_santa",    "name": "Santa PT", "accent": "Portuguese","gender": "Male",  "style": "Deep Portuguese"},
 ]
 
-# ── 3. Sentence Splitter for True Streaming ───────────────────────────────────
+# ── 3. Clause-Level Sentence Splitter for Sub-Second Streaming ───────────────
 def split_sentences(text: str) -> List[str]:
     raw_splits = re.split(r'([.!?;\n]+)', text)
     sentences = []
@@ -136,7 +136,21 @@ def split_sentences(text: str) -> List[str]:
         if re.search(r'[.!?;\n]+', piece):
             t = curr.strip()
             if t:
-                sentences.append(t)
+                words = t.split()
+                # Split long sentences into 6-10 word clauses so every chunk generates in < 500ms
+                if len(words) > 10:
+                    sub_parts = re.split(r'(,\s+|\s+—\s+|\s+-\s+)', t)
+                    sub_curr = ""
+                    for sp in sub_parts:
+                        sub_curr += sp
+                        if len(sub_curr.split()) >= 6 or any(punct in sp for punct in [',', '—', '-']):
+                            if sub_curr.strip():
+                                sentences.append(sub_curr.strip())
+                            sub_curr = ""
+                    if sub_curr.strip():
+                        sentences.append(sub_curr.strip())
+                else:
+                    sentences.append(t)
             curr = ""
     if curr.strip():
         sentences.append(curr.strip())
