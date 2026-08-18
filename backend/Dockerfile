@@ -2,21 +2,21 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system audio dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     espeak-ng \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install python dependencies
+# Install python requirements
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Download model files from HF hub
-RUN pip install huggingface_hub
-RUN python -c "from huggingface_hub import hf_hub_download; hf_hub_download('hexgrad/Kokoro-82M-v1.0-ONNX', 'kokoro-v1.0.onnx', local_dir='/app/models'); hf_hub_download('hexgrad/Kokoro-82M-v1.0-ONNX', 'voices-v1.0.bin', local_dir='/app/models')"
-
-# Copy application code
+# Copy application files
 COPY . .
+
+# Create models directory
+RUN mkdir -p /app/models
 
 EXPOSE 7860
 
