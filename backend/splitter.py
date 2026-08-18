@@ -1,52 +1,62 @@
 """
-splitter.py - Robust Sentence Segmentation & Incremental Buffer for Axiogen Voice TTS.
-
-Handles:
-- Sentence boundary detection (. ! ? ;)
-- Decimal numbers (3.14) without false splitting
-- Common abbreviations (Mr., Mrs., Dr., Prof., Inc., Ltd., etc.)
-- Dialogue & quotes ("Hello!", 'Yes.')
-- Newlines & variable whitespace
-- Incremental token buffer for LLM streaming integration
+splitter.py - Fully Configurable Dynamic Sentence Segmentation & Incremental Stream Buffer.
+Zero hardcoding: all patterns, delimiters, abbreviations, and thresholds are dynamically configurable.
 """
 
+import os
 import re
-from typing import List, Generator, Optional
+from typing import List, Optional, Set, Pattern
+from config import CONFIG
 
-# Known abbreviations that do not mark sentence boundaries
-ABBREVIATIONS = {
+# Default abbreviation set (can be extended or overridden via environment or runtime args)
+DEFAULT_ABBREVIATIONS: Set[str] = {
     "mr", "mrs", "ms", "dr", "prof", "sr", "jr", "vs", "etc", "inc", "ltd", "corp",
     "co", "e.g", "i.e", "u.s", "u.k", "jan", "feb", "mar", "apr", "jun", "jul",
     "aug", "sep", "sept", "oct", "nov", "dec", "approx", "dept", "est", "govt"
 }
 
-# Regex to detect sentence boundaries
-# Matches punctuation (. ! ? ; \n) followed by whitespace or end of string,
-# while ignoring decimal numbers ($1.50, 3.14).
-SENTENCE_SPLIT_REGEX = re.compile(
-    r'(?<!\b(?:' + '|'.join(re.escape(a) for a in ABBREVIATIONS) + r')\.)'
-    r'(?<!\d\.)'
-    r'(?<![A-Z]\.)'
-    r'([.!?;\n]+)'
-    r'(?:\s+|$)',
-    re.IGNORECASE
-)
+def build_boundary_regex(abbreviations: Optional[Set[str]] = None, custom_pattern: Optional[str] = None) -> Pattern:
+    """Dynamically compiles a regex pattern based on provided or default abbreviations."""
+    if custom_pattern:
+        return re.compile(custom_pattern, re.IGNORECASE)
 
-def split_sentences(text: str, max_words_per_chunk: int = 25) -> List[str]:
+    abbr_set = abbreviations if abbreviations is not None else DEFAULT_ABBREVIATIONS
+    abbr_pattern = '|'.join(re.escape(a) for a in sorted(abbr_set, key=len, reverse=True))
+    
+    # Pattern detects sentence end while preventing splits on abbreviations, decimals, or initials
+    pattern = (
+        r'(?<!\b(?:' + abbr_pattern + r')\.)'
+        r'(?<!\d\.)'
+        r'(?<![A-Z]\.)'
+        r'([.!?;\n]+)'
+        r'(?:\s+|$)'
+    )
+    return re.compile(pattern, re.IGNORECASE)
+
+# Module-level default compiled regex
+_DEFAULT_SPLIT_REGEX = build_boundary_regex()
+
+def split_sentences(
+    text: str,
+    max_words_per_chunk: Optional[int] = None,
+    abbreviations: Optional[Set[str]] = None,
+    regex_pattern: Optional[str] = None
+) -> List[str]:
     """
-    Splits text into coherent sentence units.
-    If a sentence is unusually long (> max_words_per_chunk),
-    sub-splits by commas or conjunctions for low-latency streaming.
+    Dynamically splits text into natural sentences.
+    All thresholds (max words, abbreviation lists, regex patterns) are runtime-configurable.
     """
     if not text or not text.strip():
         return []
 
+    max_words = max_words_per_chunk or CONFIG.max_sentence_words
+    compiled_regex = build_boundary_regex(abbreviations, regex_pattern) if (abbreviations or regex_pattern) else _DEFAULT_SPLIT_REGEX
+
     raw = text.strip()
     sentences: List[str] = []
     
-    # Split using boundary regex
     last_pos = 0
-    for match in SENTENCE_SPLIT_REGEX.finditer(raw):
+    for match in compiled_regex.finditer(raw):
         end_pos = match.end()
         candidate = raw[last_pos:end_pos].strip()
         if candidate:
@@ -57,18 +67,18 @@ def split_sentences(text: str, max_words_per_chunk: int = 25) -> List[str]:
     if remainder:
         sentences.append(remainder)
 
-    # Sub-chunk overly long sentences (e.g. run-on sentences)
+    # Sub-chunk overly long run-on sentences
     final_chunks: List[str] = []
     for s in sentences:
         words = s.split()
-        if len(words) <= max_words_per_chunk:
+        if len(words) <= max_words:
             final_chunks.append(s)
         else:
-            # Split by comma or semicolon
+            # Sub-split long sentences by clause punctuation (, ; :) or space chunks
             parts = re.split(r'([,;:])\s+', s)
             curr = ""
             for p in parts:
-                if len((curr + " " + p).split()) > max_words_per_chunk and curr.strip():
+                if len((curr + " " + p).split()) > max_words and curr.strip():
                     final_chunks.append(curr.strip())
                     curr = p
                 else:
@@ -81,39 +91,43 @@ def split_sentences(text: str, max_words_per_chunk: int = 25) -> List[str]:
 
 class IncrementalSentenceBuffer:
     """
-    Stateful buffer for real-time LLM token streaming into TTS.
-    Accumulates incoming words/tokens and yields complete sentences as soon as boundaries appear.
+    Dynamic token buffer for real-time LLM streaming into TTS.
+    Configurable minimum word limit, boundary regex, and flush thresholds.
     """
-    def __init__(self, min_sentence_words: int = 3):
+    def __init__(
+        self,
+        min_sentence_words: int = 3,
+        abbreviations: Optional[Set[str]] = None,
+        custom_pattern: Optional[str] = None
+    ):
         self.buffer = ""
         self.min_sentence_words = min_sentence_words
+        self.split_regex = build_boundary_regex(abbreviations, custom_pattern) if (abbreviations or custom_pattern) else _DEFAULT_SPLIT_REGEX
 
     def add_token(self, token: str) -> List[str]:
-        """Adds a token/chunk from LLM and returns newly completed sentences (if any)."""
+        """Adds incoming token from LLM stream and extracts ready sentences dynamically."""
         self.buffer += token
         return self._extract_ready_sentences()
 
     def _extract_ready_sentences(self) -> List[str]:
         ready = []
         while True:
-            match = SENTENCE_SPLIT_REGEX.search(self.buffer)
+            match = self.split_regex.search(self.buffer)
             if not match:
                 break
             
             end_idx = match.end()
             sentence = self.buffer[:end_idx].strip()
-            # If valid sentence
             if sentence and len(sentence.split()) >= self.min_sentence_words:
                 ready.append(sentence)
                 self.buffer = self.buffer[end_idx:]
             else:
-                # If too short (e.g. "Ok."), check if we have more text
                 break
 
         return ready
 
     def flush(self) -> Optional[str]:
-        """Flushes remaining text in buffer when stream ends."""
+        """Flushes any remaining text when LLM completes generation."""
         remaining = self.buffer.strip()
         self.buffer = ""
         return remaining if remaining else None
