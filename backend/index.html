@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Axiogen Voice — AI Speech Platform</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09090b;--s1:#18181b;--s2:#27272a;--brd:#3f3f46;
+  --p:#8b5cf6;--ph:#a78bfa;--pd:rgba(139,92,246,.15);
+  --g:#22c55e;--r:#ef4444;--a:#f59e0b;
+  --t:#fafafa;--t2:#a1a1aa;--t3:#71717a;
+  --rad:10px;
+}
+html{font-size:14px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* Header */
+.hdr{position:sticky;top:0;z-index:100;background:rgba(9,9,11,.85);backdrop-filter:blur(16px)saturate(180%);border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;letter-spacing:-.5px}
+.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#8b5cf6,#ec4899);border-radius:8px;display:grid;place-items:center;font-size:16px;box-shadow:0 0 24px rgba(139,92,246,.35)}
+.nav{display:flex;gap:2px;background:var(--s1);padding:3px;border-radius:8px;border:1px solid var(--brd)}
+.nav button{padding:7px 16px;border:none;background:0;color:var(--t3);font:600 13px 'Inter',sans-serif;border-radius:6px;cursor:pointer;transition:.15s}
+.nav button:hover{color:var(--t2)}
+.nav button.on{background:var(--p);color:#fff;box-shadow:0 2px 8px rgba(139,92,246,.4)}
+.badge{display:flex;align-items:center;gap:6px;font:600 12px 'Inter',sans-serif;color:var(--g);background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);padding:5px 12px;border-radius:99px}
+.badge::before{content:'';width:6px;height:6px;background:var(--g);border-radius:50%;box-shadow:0 0 8px var(--g);animation:blink 2s infinite}
+@keyframes blink{50%{opacity:.3}}
+
+/* Layout */
+.wrap{max-width:1200px;margin:0 auto;padding:28px 20px}
+.grid{display:grid;grid-template-columns:1fr 380px;gap:20px}
+@media(max-width:960px){.grid{grid-template-columns:1fr}}
+
+/* Card */
+.c{background:var(--s1);border:1px solid var(--brd);border-radius:14px;padding:22px}
+.c-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+/* Forms */
+textarea,input[type=text],select{width:100%;background:var(--bg);border:1px solid var(--brd);color:var(--t);padding:12px 14px;border-radius:var(--rad);font:400 14px 'Inter',sans-serif;outline:0;transition:.2s}
+textarea:focus,input[type=text]:focus,select:focus{border-color:var(--p);box-shadow:0 0 0 3px var(--pd)}
+textarea{resize:vertical;min-height:110px;line-height:1.55}
+select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2371717a' viewBox='0 0 16 16'%3e%3cpath d='M4 6l4 4 4-4'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 12px center}
+label{display:block;font:600 11px 'Inter',sans-serif;text-transform:uppercase;letter-spacing:.6px;color:var(--t3);margin-bottom:6px}
+.row{display:flex;justify-content:space-between;align-items:center}
+
+/* Voice Grid */
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:8px;margin-bottom:12px}
+.vc{background:var(--bg);border:1px solid var(--brd);border-radius:10px;padding:10px 12px;cursor:pointer;transition:.15s;user-select:none}
+.vc:hover{border-color:var(--t3);background:var(--s2)}
+.vc.on{border-color:var(--p);background:var(--pd);box-shadow:0 0 12px rgba(139,92,246,.2)}
+.vc .vn{font-weight:700;font-size:13px;margin-bottom:2px}
+.vc .vt{font-size:10px;color:var(--t3);text-transform:uppercase;font-weight:600;letter-spacing:.3px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;border:none;border-radius:var(--rad);font:700 14px 'Inter',sans-serif;cursor:pointer;transition:.15s;width:100%}
+.btn-p{background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;box-shadow:0 4px 14px rgba(139,92,246,.3)}
+.btn-p:hover{box-shadow:0 6px 20px rgba(139,92,246,.45);transform:translateY(-1px)}
+.btn-p:active{transform:translateY(0)}
+.btn-p:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn-o{background:var(--s2);color:var(--t);border:1px solid var(--brd);box-shadow:none}
+.btn-o:hover{border-color:var(--t3)}
+.btn-sm{padding:7px 14px;font-size:12px;width:auto}
+.btn-d{color:var(--r);border-color:rgba(239,68,68,.3)}
+.btn-d:hover{background:rgba(239,68,68,.1);border-color:var(--r)}
+
+/* Player */
+.plyr{background:var(--bg);border:1px solid var(--brd);border-radius:12px;padding:16px;margin-top:16px;display:none}
+.plyr.show{display:block}
+.plyr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:13px;font-weight:600}
+.plyr-s{display:flex;align-items:center;gap:8px;color:var(--ph)}
+.plyr-m{color:var(--g);font-family:'JetBrains Mono',monospace;font-size:12px}
+audio{width:100%;height:36px;outline:0}
+
+/* Progress bar */
+.pbar{width:100%;height:4px;background:var(--s2);border-radius:2px;margin-top:10px;overflow:hidden}
+.pbar-fill{height:100%;background:linear-gradient(90deg,#8b5cf6,#ec4899);border-radius:2px;transition:width .3s;width:0%}
+
+/* Timer */
+.timer{font:600 13px 'JetBrains Mono',monospace;color:var(--a);text-align:center;margin-top:8px}
+
+/* Wave */
+.wave{display:inline-flex;align-items:center;gap:2px;height:14px}
+.wave i{display:block;width:3px;background:var(--ph);border-radius:2px;animation:w .8s ease-in-out infinite}
+.wave i:nth-child(2){animation-delay:.15s}
+.wave i:nth-child(3){animation-delay:.3s}
+.wave i:nth-child(4){animation-delay:.45s}
+.wave i:nth-child(5){animation-delay:.6s}
+@keyframes w{0%,100%{height:3px}50%{height:14px}}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.stat{background:var(--bg);border:1px solid var(--brd);border-radius:10px;padding:14px;text-align:center}
+.stat-v{font:800 18px 'JetBrains Mono',monospace;color:var(--ph)}
+.stat-l{font:600 10px 'Inter',sans-serif;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-top:3px}
+
+/* Code */
+.code{background:var(--bg);border:1px solid var(--brd);border-radius:10px;padding:14px 16px;font:13px/1.55 'JetBrains Mono',monospace;color:#93c5fd;overflow-x:auto;white-space:pre;position:relative}
+.code-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.code-l{font:600 11px 'Inter',sans-serif;text-transform:uppercase;color:var(--t3);letter-spacing:.5px}
+.copy-btn{font:500 11px 'Inter',sans-serif;color:var(--ph);background:var(--pd);border:none;padding:4px 10px;border-radius:6px;cursor:pointer}
+
+/* Table */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;padding:10px 14px;color:var(--t3);font:600 11px 'Inter',sans-serif;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--brd);background:rgba(255,255,255,.02)}
+.tbl td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.04)}
+.tbl code{background:var(--bg);padding:3px 8px;border-radius:6px;font-size:12px;word-break:break-all}
+
+/* Modal */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);display:none;place-items:center;z-index:200}
+.ov.show{display:grid}
+.mdl{background:var(--s1);border:1px solid var(--brd);border-radius:16px;padding:24px;width:min(420px,92vw);box-shadow:0 24px 48px rgba(0,0,0,.4)}
+.mdl h3{font-size:16px;font-weight:700;margin-bottom:4px}
+.mdl p{font-size:13px;color:var(--t2);margin-bottom:16px}
+.mdl-acts{display:flex;gap:8px;margin-top:16px}
+
+/* Views */
+.view{display:none}.view.active{display:block}
+.view-grid.active{display:grid}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--s1);border:1px solid var(--brd);border-radius:10px;padding:12px 18px;font:600 13px 'Inter',sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:300;transform:translateY(120%);transition:.3s;display:flex;align-items:center;gap:8px}
+.toast.show{transform:translateY(0)}
+.toast.ok{border-color:rgba(34,197,94,.3);color:var(--g)}
+.toast.err{border-color:rgba(239,68,68,.3);color:var(--r)}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="logo"><div class="logo-icon">⚡</div>Axiogen Voice</div>
+  <nav class="nav">
+    <button class="on" data-tab="studio">Playground</button>
+    <button data-tab="keys">API Keys</button>
+    <button data-tab="docs">API Reference</button>
+  </nav>
+  <div class="badge" id="statusBadge">Connecting…</div>
+</header>
+
+<main class="wrap">
+
+  <!-- PLAYGROUND -->
+  <div id="v-studio" class="view-grid active grid">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="c">
+        <div class="c-title">📝 Input</div>
+        <div class="row" style="margin-bottom:6px">
+          <label style="margin:0">Text to synthesize</label>
+          <span id="charCt" style="font:500 11px 'JetBrains Mono',monospace;color:var(--t3)">0 / 5000</span>
+        </div>
+        <textarea id="inp" placeholder="Type or paste text here…">Hello! Welcome to Axiogen Voice. This is a demonstration of real-time neural speech synthesis.</textarea>
+      </div>
+
+      <div class="c">
+        <div class="c-title">🎭 Voice</div>
+        <div class="vgrid" id="voiceGrid"></div>
+        <select id="voiceSel"></select>
+      </div>
+
+      <div class="c">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+          <div>
+            <div class="row"><label style="margin:0">Speed</label><span id="spdLbl" style="font:600 12px 'JetBrains Mono',monospace;color:var(--t2)">1.00×</span></div>
+            <input type="range" id="spd" min="0.5" max="2" step="0.05" value="1" style="width:100%;accent-color:var(--p);margin-top:6px">
+          </div>
+          <div>
+            <label>API Key</label>
+            <input type="text" id="keyInp" value="teamaxiogen_admin_master" style="font-family:'JetBrains Mono',monospace;font-size:12px">
+          </div>
+        </div>
+        <button class="btn btn-p" id="genBtn" onclick="generate()">
+          <span id="genLbl">▶ Generate Speech</span>
+        </button>
+        <div class="plyr" id="plyr">
+          <div class="plyr-top">
+            <div class="plyr-s" id="pStat"><span class="wave"><i></i><i></i><i></i><i></i><i></i></span> Generating…</div>
+            <div class="plyr-m" id="pMeta"></div>
+          </div>
+          <div class="pbar"><div class="pbar-fill" id="pBar"></div></div>
+          <div class="timer" id="pTimer"></div>
+          <audio id="aud" controls style="margin-top:10px"></audio>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="c">
+        <div class="c-title">📊 Platform</div>
+        <div class="stats">
+          <div class="stat"><div class="stat-v" id="stV">—</div><div class="stat-l">Voices</div></div>
+          <div class="stat"><div class="stat-v">24kHz</div><div class="stat-l">Sample Rate</div></div>
+          <div class="stat"><div class="stat-v">WAV</div><div class="stat-l">Output</div></div>
+        </div>
+      </div>
+      <div class="c">
+        <div class="c-title">💻 Quick Start</div>
+        <div class="code-h"><span class="code-l">Python</span><button class="copy-btn" onclick="copySnippet()">Copy</button></div>
+        <div class="code" id="snippet">import requests
+
+resp = requests.post(
+    "https://adityax26-axiogentts.hf.space/v1/audio/speech",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "model": "axiogen-v2",
+        "input": "Hello from Axiogen!",
+        "voice": "af_bella",
+        "speed": 1.0
+    }
+)
+with open("speech.wav", "wb") as f:
+    f.write(resp.content)</div>
+      </div>
+      <div class="c">
+        <div class="c-title">🔗 cURL</div>
+        <div class="code" style="font-size:12px;color:#86efac">curl -X POST https://adityax26-axiogentts.hf.space/v1/audio/speech \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"axiogen-v2","input":"Hello!","voice":"af_bella"}' \
+  --output speech.wav</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- API KEYS -->
+  <div id="v-keys" class="view">
+    <div class="c">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <div>
+          <div class="c-title" style="margin:0">🔑 API Keys</div>
+          <p style="color:var(--t3);font-size:13px;margin-top:4px">Manage your API keys for programmatic access.</p>
+        </div>
+        <button class="btn btn-p btn-sm" onclick="openModal()">+ Create Key</button>
+      </div>
+      <div id="keysList"><p style="color:var(--t3);padding:20px;text-align:center">Loading…</p></div>
+    </div>
+  </div>
+
+  <!-- DOCS -->
+  <div id="v-docs" class="view">
+    <div class="c" style="max-width:820px">
+      <div class="c-title" style="margin-bottom:20px">📚 API Reference</div>
+
+      <h3 style="font-size:15px;margin-bottom:14px">Base URL</h3>
+      <div class="code" style="margin-bottom:20px;color:var(--g)">https://adityax26-axiogentts.hf.space</div>
+
+      <h3 style="font-size:15px;margin-bottom:14px">Authentication</h3>
+      <p style="color:var(--t2);font-size:13px;line-height:1.6;margin-bottom:20px">Include your API key as a Bearer token: <code style="background:var(--s2);padding:2px 6px;border-radius:4px">Authorization: Bearer YOUR_API_KEY</code></p>
+
+      <h3 style="font-size:15px;margin-bottom:14px">Endpoints</h3>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span style="background:var(--g);color:#000;font:700 10px 'Inter',sans-serif;padding:3px 8px;border-radius:4px">POST</span>
+            <code style="font-size:13px">/v1/audio/speech</code>
+          </div>
+          <p style="color:var(--t2);font-size:13px;margin-bottom:8px">Generate speech from text. OpenAI SDK compatible.</p>
+          <div class="code" style="font-size:12px">{
+  "model": "axiogen-v2",
+  "input": "Text to convert to speech",
+  "voice": "af_bella",
+  "speed": 1.0
+}
+// Returns: audio/wav binary</div>
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span style="background:#3b82f6;color:#fff;font:700 10px 'Inter',sans-serif;padding:3px 8px;border-radius:4px">GET</span>
+            <code style="font-size:13px">/v1/voices</code>
+          </div>
+          <p style="color:var(--t2);font-size:13px">List all available voices with metadata.</p>
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span style="background:#3b82f6;color:#fff;font:700 10px 'Inter',sans-serif;padding:3px 8px;border-radius:4px">GET</span>
+            <code style="font-size:13px">/v1/models</code>
+          </div>
+          <p style="color:var(--t2);font-size:13px">List available models.</p>
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span style="background:#3b82f6;color:#fff;font:700 10px 'Inter',sans-serif;padding:3px 8px;border-radius:4px">GET</span>
+            <code style="font-size:13px">/health</code>
+          </div>
+          <p style="color:var(--t2);font-size:13px">Health check — returns engine status.</p>
+        </div>
+      </div>
+
+      <h3 style="font-size:15px;margin:24px 0 14px">OpenAI SDK Compatible</h3>
+      <div class="code" style="font-size:12px">from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://adityax26-axiogentts.hf.space/v1",
+    api_key="YOUR_API_KEY"
+)
+
+response = client.audio.speech.create(
+    model="axiogen-v2",
+    voice="af_bella",
+    input="Hello from the OpenAI SDK!"
+)
+response.stream_to_file("output.wav")</div>
+
+      <h3 style="font-size:15px;margin:24px 0 14px">Rate Limits</h3>
+      <table class="tbl">
+        <tr><th>Tier</th><th>Requests / min</th><th>Max chars</th></tr>
+        <tr><td>Free</td><td>30</td><td>5,000</td></tr>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<!-- KEY MODAL -->
+<div class="ov" id="modal">
+  <div class="mdl">
+    <h3>Create API Key</h3>
+    <p>Give your key a name to identify it later.</p>
+    <input type="text" id="newKeyName" placeholder="e.g. my-app, discord-bot, production">
+    <div class="mdl-acts">
+      <button class="btn btn-p" onclick="createKey()">Create Key</button>
+      <button class="btn btn-o" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Config ──
+const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:8880'
+  : 'https://adityax26-axiogentts.hf.space';
+
+// ── DOM ──
+const $ = id => document.getElementById(id);
+const inp = $('inp'), charCt = $('charCt'), spdSlider = $('spd'), spdLbl = $('spdLbl');
+const voiceGrid = $('voiceGrid'), voiceSel = $('voiceSel'), keyInp = $('keyInp');
+const genBtn = $('genBtn'), genLbl = $('genLbl');
+const plyr = $('plyr'), pStat = $('pStat'), pMeta = $('pMeta'), pBar = $('pBar'), pTimer = $('pTimer');
+const aud = $('aud');
+
+let curVoice = 'af_bella', voices = [], generating = false, timerInterval = null;
+
+// ── Char counter ──
+inp.addEventListener('input', () => { charCt.textContent = inp.value.length + ' / 5000'; });
+charCt.textContent = inp.value.length + ' / 5000';
+
+// ── Speed ──
+spdSlider.addEventListener('input', () => { spdLbl.textContent = parseFloat(spdSlider.value).toFixed(2) + '×'; });
+
+// ── Tabs ──
+document.querySelectorAll('.nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    document.querySelectorAll('.view,.view-grid').forEach(v => v.classList.remove('active'));
+    $('v-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'keys') loadKeys();
+  });
+});
+
+// ── Health check ──
+async function checkHealth() {
+  const badge = $('statusBadge');
+  try {
+    const r = await fetch(API + '/health', {signal: AbortSignal.timeout(10000)});
+    if (r.ok) { badge.textContent = 'Online'; badge.style.color = 'var(--g)'; badge.style.borderColor = 'rgba(34,197,94,.2)'; }
+    else throw 0;
+  } catch { badge.textContent = 'Starting up…'; badge.style.color = 'var(--a)'; badge.style.borderColor = 'rgba(245,158,11,.2)'; setTimeout(checkHealth, 5000); }
+}
+checkHealth();
+
+// ── Voices ──
+async function loadVoices() {
+  try {
+    const r = await fetch(API + '/v1/voices');
+    const d = await r.json();
+    voices = d.voices || [];
+    $('stV').textContent = voices.length;
+
+    voiceGrid.innerHTML = '';
+    voices.slice(0, 8).forEach(v => {
+      const el = document.createElement('div');
+      el.className = 'vc' + (v.voice_id === curVoice ? ' on' : '');
+      el.dataset.id = v.voice_id;
+      el.innerHTML = '<div class="vn">' + v.name + '</div><div class="vt">' + v.gender + ' · ' + v.accent + '</div>';
+      el.addEventListener('click', () => pick(v.voice_id));
+      voiceGrid.appendChild(el);
+    });
+
+    voiceSel.innerHTML = '';
+    voices.forEach(v => {
+      const o = document.createElement('option');
+      o.value = v.voice_id;
+      o.textContent = v.name + ' — ' + v.accent + ' ' + v.gender + (v.style ? ' (' + v.style + ')' : '');
+      if (v.voice_id === curVoice) o.selected = true;
+      voiceSel.appendChild(o);
+    });
+  } catch { voiceGrid.innerHTML = '<div style="color:var(--r);font-size:13px">Backend starting up, try again in 30s…</div>'; }
+}
+loadVoices();
+voiceSel.addEventListener('change', () => pick(voiceSel.value));
+
+function pick(id) {
+  curVoice = id;
+  document.querySelectorAll('.vc').forEach(c => c.classList.toggle('on', c.dataset.id === id));
+  voiceSel.value = id;
+}
+
+// ── WAV Merge ──
+function mergeWav(buffers) {
+  if (!buffers.length) return null;
+  if (buffers.length === 1) return new Blob([buffers[0]], {type:'audio/wav'});
+  let totalPCM = 0; const pcm = []; let sr = 24000, ch = 1, bits = 16;
+  for (const buf of buffers) {
+    const dv = new DataView(buf);
+    if (!pcm.length) { ch = dv.getUint16(22, true); sr = dv.getUint32(24, true); bits = dv.getUint16(34, true); }
+    let off = 12;
+    while (off < buf.byteLength - 8) {
+      const id = String.fromCharCode(dv.getUint8(off), dv.getUint8(off+1), dv.getUint8(off+2), dv.getUint8(off+3));
+      const sz = dv.getUint32(off + 4, true);
+      if (id === 'data') { pcm.push(new Uint8Array(buf, off + 8, sz)); totalPCM += sz; break; }
+      off += 8 + sz;
+    }
+  }
+  const wav = new ArrayBuffer(44 + totalPCM), w = new DataView(wav);
+  const ws = (o, s) => { for (let i = 0; i < s.length; i++) w.setUint8(o + i, s.charCodeAt(i)); };
+  ws(0,'RIFF'); w.setUint32(4,36+totalPCM,true); ws(8,'WAVE'); ws(12,'fmt ');
+  w.setUint32(16,16,true); w.setUint16(20,1,true); w.setUint16(22,ch,true);
+  w.setUint32(24,sr,true); w.setUint32(28,sr*ch*bits/8,true);
+  w.setUint16(32,ch*bits/8,true); w.setUint16(34,bits,true);
+  ws(36,'data'); w.setUint32(40,totalPCM,true);
+  let pos = 44;
+  for (const p of pcm) { new Uint8Array(wav, pos, p.length).set(p); pos += p.length; }
+  return new Blob([wav], {type:'audio/wav'});
+}
+
+// ── Micro-split text ──
+function microSplit(text) {
+  const sents = text.match(/[^.!?;]+[.!?;]*/g) || [text];
+  const out = [];
+  for (const s of sents) {
+    const t = s.trim(); if (!t) continue;
+    const words = t.split(/\s+/);
+    if (words.length <= 10) { out.push(t); }
+    else { for (let i = 0; i < words.length; i += 8) { const sl = words.slice(i, i+8).join(' '); if (sl.trim()) out.push(sl.trim()); } }
+  }
+  return out.length ? out : [text.trim()];
+}
+
+// ── Live timer ──
+function startTimer() {
+  const t0 = Date.now();
+  pTimer.textContent = '0.0s';
+  timerInterval = setInterval(() => { pTimer.textContent = ((Date.now() - t0) / 1000).toFixed(1) + 's'; }, 100);
+}
+function stopTimer() { clearInterval(timerInterval); timerInterval = null; }
+
+// ── STREAMING GENERATE: Sub-second First-Sound Playback ──
+async function generate() {
+  if (generating) return;
+  const text = inp.value.trim();
+  if (!text) { toast('Enter some text first','err'); return; }
+  if (text.length > 5000) { toast('Text exceeds 5000 char limit','err'); return; }
+
+  generating = true;
+  genBtn.disabled = true;
+  genLbl.textContent = '⏳ Streaming…';
+  plyr.classList.add('show');
+  pBar.style.width = '20%';
+  pMeta.textContent = '';
+  aud.src = '';
+  aud.pause();
+  startTimer();
+
+  const key = keyInp.value.trim() || 'teamaxiogen_admin_master';
+  const speed = parseFloat(spdSlider.value);
+  pStat.innerHTML = '<span class="wave"><i></i><i></i><i></i><i></i><i></i></span> Streaming speech in real-time…';
+
+  let audioCtx;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)({sampleRate: 24000});
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
+  } catch { await simpleFallback(text, key, speed); return; }
+
+  let nextT = audioCtx.currentTime + 0.05, firstDone = false, dur = 0;
+  const allBufs = [];
+  const t0 = performance.now();
+
+  try {
+    const res = await fetch(API + '/v1/audio/speech', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + key
+      },
+      body: JSON.stringify({
+        model: 'axiogen-v2',
+        input: text,
+        voice: curVoice,
+        speed: speed,
+        stream: true
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || err.detail || 'Streaming failed');
+    }
+
+    const reader = res.body.getReader();
+    let accumulated = new Uint8Array(0);
+
+    function concatU8(a, b) {
+      const c = new Uint8Array(a.length + b.length);
+      c.set(a, 0); c.set(b, a.length);
+      return c;
+    }
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      accumulated = concatU8(accumulated, value);
+
+      while (accumulated.length >= 4) {
+        const dv = new DataView(accumulated.buffer, accumulated.byteOffset, 4);
+        const chunkLen = dv.getUint32(0, false);
+        if (accumulated.length < 4 + chunkLen) break;
+
+        const wavBytes = accumulated.slice(4, 4 + chunkLen);
+        accumulated = accumulated.slice(4 + chunkLen);
+        allBufs.push(wavBytes.buffer.slice(wavBytes.byteOffset, wavBytes.byteOffset + wavBytes.byteLength));
+
+        const audioBuf = await audioCtx.decodeAudioData(wavBytes.buffer.slice(wavBytes.byteOffset, wavBytes.byteOffset + wavBytes.byteLength));
+        if (!firstDone) {
+          const ttfs = Math.round(performance.now() - t0);
+          pMeta.textContent = '⚡ First-Sound: ' + ttfs + 'ms';
+          firstDone = true;
+          pBar.style.width = '70%';
+        }
+
+        const src = audioCtx.createBufferSource();
+        src.buffer = audioBuf;
+        src.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+        if (nextT < now) nextT = now;
+        src.start(nextT);
+        nextT += audioBuf.duration;
+        dur += audioBuf.duration;
+      }
+    }
+
+    pBar.style.width = '100%';
+    stopTimer();
+    const elapsed = ((performance.now() - t0)/1000).toFixed(1);
+    pStat.innerHTML = '✅ Done — ' + dur.toFixed(1) + 's audio in ' + elapsed + 's';
+
+    const merged = mergeWav(allBufs);
+    if (merged) aud.src = URL.createObjectURL(merged);
+  } catch(e) {
+    stopTimer();
+    pStat.innerHTML = '❌ ' + e.message;
+    toast(e.message, 'err');
+  } finally {
+    generating = false;
+    genBtn.disabled = false;
+    genLbl.textContent = '▶ Generate Speech';
+  }
+}
+
+async function simpleFallback(text, key, speed) {
+  const t0 = performance.now();
+  pStat.innerHTML = '<span class="wave"><i></i><i></i><i></i><i></i><i></i></span> Generating…';
+  try {
+    const r = await fetch(API + '/v1/audio/speech', {
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body: JSON.stringify({model:'axiogen-v2',input:text,voice:curVoice,speed})
+    });
+    if (!r.ok) throw new Error('Generation failed');
+    const blob = await r.blob();
+    aud.src = URL.createObjectURL(blob);
+    aud.play();
+    stopTimer();
+    pStat.innerHTML = '✅ Ready';
+    pMeta.textContent = ((performance.now()-t0)/1000).toFixed(1) + 's';
+    pBar.style.width = '100%';
+  } catch(e) { stopTimer(); pStat.innerHTML = '❌ ' + e.message; toast(e.message,'err'); }
+  finally { generating = false; genBtn.disabled = false; genLbl.textContent = '▶ Generate Speech'; }
+}
+
+// ── Keys ──
+async function loadKeys() {
+  const el = $('keysList');
+  try {
+    const key = keyInp.value.trim() || 'teamaxiogen_admin_master';
+    const r = await fetch(API + '/v1/keys/list', {headers:{'Authorization':'Bearer '+key}});
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || d.error?.message || 'Denied');
+    const keys = d.keys || [];
+    if (!keys.length) { el.innerHTML = '<p style="color:var(--t3);padding:20px;text-align:center">No keys yet.</p>'; return; }
+    let h = '<table class="tbl"><thead><tr><th>Name</th><th>Key</th><th>Created</th><th></th></tr></thead><tbody>';
+    keys.forEach(k => { h += '<tr><td><strong>'+k.name+'</strong></td><td><code>'+k.masked+'</code></td><td style="color:var(--t3)">'+(k.created||'')+'</td><td><button class="btn btn-o btn-sm btn-d" onclick="revokeKey(\''+k.key+'\')">Revoke</button></td></tr>'; });
+    el.innerHTML = h + '</tbody></table>';
+  } catch(e) { el.innerHTML = '<p style="color:var(--r);padding:16px">'+e.message+'</p>'; }
+}
+
+function openModal() { $('modal').classList.add('show'); $('newKeyName').focus(); }
+function closeModal() { $('modal').classList.remove('show'); }
+
+async function createKey() {
+  const name = $('newKeyName').value.trim() || 'Untitled Key';
+  const key = keyInp.value.trim() || 'teamaxiogen_admin_master';
+  try {
+    const r = await fetch(API+'/v1/keys/create', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({name})});
+    const d = await r.json(); if (!r.ok) throw new Error(d.detail||'Failed');
+    closeModal(); toast('Key created: '+d.key,'ok'); $('newKeyName').value = ''; loadKeys();
+  } catch(e) { toast(e.message,'err'); }
+}
+
+async function revokeKey(k) {
+  if (!confirm('Revoke this key?')) return;
+  const key = keyInp.value.trim() || 'teamaxiogen_admin_master';
+  await fetch(API+'/v1/keys/delete?key='+encodeURIComponent(k),{method:'DELETE',headers:{'Authorization':'Bearer '+key}});
+  toast('Revoked','ok'); loadKeys();
+}
+
+function copySnippet() { navigator.clipboard.writeText($('snippet').textContent).then(()=>toast('Copied!','ok')); }
+
+function toast(msg,type) {
+  const t = $('toast');
+  t.textContent = (type==='ok'?'✅ ':'❌ ') + msg;
+  t.className = 'toast show ' + (type||'ok');
+  clearTimeout(t._tid);
+  t._tid = setTimeout(()=>t.classList.remove('show'),4000);
+}
+</script>
+</body>
+</html>
