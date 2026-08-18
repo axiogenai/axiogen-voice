@@ -2,9 +2,9 @@
 
 > High-performance Neural Speech & Text-to-Speech (TTS) Platform by Axiogen AI.
 
-[![Platform](https://img.shields.io/badge/Platform-Axiogen%20Voice-8B5CF6?style=for-the-badge&logo=fastapi)](https://voice.axiogen.in)
-[![Deployment](https://img.shields.io/badge/Deployment-Vercel%20%2B%20API-10B981?style=for-the-badge&logo=vercel)](https://voice.axiogen.in)
-[![License](https://img.shields.io/badge/License-MIT-38BDF8?style=for-the-badge)](LICENSE)
+[![Backend](https://img.shields.io/badge/Backend-HF%20Spaces%20(16GB%20RAM)-FFD21E?style=for-the-badge&logo=huggingface)](https://huggingface.co/spaces/adityax26/axiogentts)
+[![Frontend](https://img.shields.io/badge/Frontend-Vercel%20Edge-000000?style=for-the-badge&logo=vercel)](https://github.com/axiogenai/axiogen-voice)
+[![License](https://img.shields.io/badge/License-MIT-8B5CF6?style=for-the-badge)](LICENSE)
 
 ---
 
@@ -25,11 +25,11 @@
 axiogen-voice/
 ├── frontend/             # Vercel-ready Web Studio & Playground
 │   ├── index.html        # Modern Dark UI (Playground, API Keys, Docs)
-│   ├── vercel.json       # Vercel headers & routing configuration
+│   ├── vercel.json       # Vercel headers & proxy rewrite to HF Space
 │   └── package.json      # Node deployment manifest
-└── backend/              # Python FastAPI & ONNX Neural Engine
+└── backend/              # Python FastAPI & ONNX Neural Engine (Deployed on HF Spaces)
     ├── server.py         # Multi-threaded REST & Streaming Server
-    ├── Dockerfile        # Container build for Cloud/HF Spaces
+    ├── Dockerfile        # Container build for Hugging Face Spaces
     ├── requirements.txt  # Python dependencies
     └── README.md         # Backend API documentation
 ```
@@ -43,7 +43,7 @@ axiogen-voice/
 from openai import OpenAI
 
 client = OpenAI(
-    base_url="https://voice.axiogen.in/v1",
+    base_url="https://adityax26-axiogentts.hf.space/v1",
     api_key="teamaxiogen_admin_master"
 )
 
@@ -57,7 +57,7 @@ response.stream_to_file("output.wav")
 
 ### cURL
 ```bash
-curl -X POST "https://voice.axiogen.in/v1/audio/speech" \
+curl -X POST "https://adityax26-axiogentts.hf.space/v1/audio/speech" \
   -H "Authorization: Bearer teamaxiogen_admin_master" \
   -H "Content-Type: application/json" \
   -d '{
