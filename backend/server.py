@@ -212,18 +212,32 @@ async def list_voices(_: str = Depends(verify_api_key)):
 
     return {"voices": voices_data}
 
-# ── Ultra-Fast Streaming Generator ──
+def split_natural_clauses(text: str):
+    import re
+    raw_sentences = re.split(r'(?<=[.!?;\n])\s+', text.strip())
+    clauses = []
+    for s in raw_sentences:
+        s = s.strip()
+        if not s: continue
+        if len(s) > 40 and ',' in s:
+            sub = re.split(r'(?<=[,])\s+', s)
+            clauses.extend([c.strip() for c in sub if c.strip()])
+        else:
+            clauses.append(s)
+    return clauses or [text.strip()]
+
+# ── Ultra-Fast Clause-Level Streaming Generator ──
 async def audio_stream_generator(text: str, voice: str, speed: float) -> AsyncGenerator[bytes, None]:
     v = voice if voice in available_voices_list else "af_bella"
     lang = "en-gb" if v.startswith("b") else "en-us"
     sp = max(0.5, min(speed, 2.0))
+    clauses = split_natural_clauses(text)
 
-    # Streams individual WAV chunks progressively
-    async for samples, sample_rate in engine.create_stream(text, voice=v, speed=sp, lang=lang):
+    for clause in clauses:
+        samples, sample_rate = await asyncio.to_thread(engine.create, clause, voice=v, speed=sp, lang=lang)
         buf = io.BytesIO()
         sf.write(buf, samples, sample_rate, format='WAV', subtype='PCM_16')
         chunk_bytes = buf.getvalue()
-        # Prefix 4-byte length header for client demuxing
         yield struct.pack(">I", len(chunk_bytes)) + chunk_bytes
 
 @app.post("/v1/audio/speech")
