@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  axiogen-voice:
+    build: .
+    container_name: axiogen-voice-server
+    restart: always
+    ports:
+      - "7860:7860"
+    environment:
+      - PORT=7860
+      - HOST=0.0.0.0
+      - ADMIN_KEY=teamaxiogen_admin_master
+      - CORS_ORIGINS=*
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
