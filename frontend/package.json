@@ -1,0 +1,12 @@
+{
+  "name": "axiogen-voice-studio",
+  "version": "2.0.0",
+  "description": "Axiogen Voice Studio - Next-Gen AI Speech Platform",
+  "scripts": {
+    "dev": "npx serve -l 3000",
+    "start": "npx serve -l 3000"
+  },
+  "keywords": ["tts", "speech", "axiogen", "ai"],
+  "author": "Axiogen AI",
+  "license": "MIT"
+}
